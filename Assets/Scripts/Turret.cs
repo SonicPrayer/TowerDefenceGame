@@ -1,15 +1,23 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Turret : MonoBehaviour
 {
     private Transform target; // Враг
+
+    [Header("Attributes")]
     public float range = 15f; // Расстояние до врага
     public string enemyTag = "Enemy"; // Тег для поиска врага
+    public float fireRate = 1f; // Скорость атаки
+    public float fireCountdown = 0f; // Откат аттаки
 
+    [Header("Setup")]
     public Transform partToRotate; // Какую часть турели поворачиваем
     public float turnSpeed = 10f; // Скорость поворота
+    public GameObject bulletPrefab; // Префаб пули
+    public Transform firePoint; // Точка выстрела
 
     void Start()
     {
@@ -56,6 +64,25 @@ public class Turret : MonoBehaviour
         Quaternion lookRotation = Quaternion.LookRotation(dir); // Как повернуть турель в направлении врага
         Vector3 rotation = Quaternion.Lerp(partToRotate.rotation, lookRotation, Time.deltaTime * turnSpeed).eulerAngles; // Конвертируем в поворот в систему трех координат
         partToRotate.rotation = Quaternion.Euler(0f, rotation.y, 0f); // Делаем поворот турели
+
+        if (fireCountdown <= 0f)
+        {
+            Shoot();
+            fireCountdown = 1f / fireRate;
+        }
+
+        fireCountdown -= Time.deltaTime; // За каждую секунду уменьшаем кулдаун стрельбы
+    }
+
+    private void Shoot()
+    {
+        GameObject bulletGO =  (GameObject)Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Bullet bullet = bulletGO.GetComponent<Bullet>();
+
+        if (bullet != null)
+        {
+            bullet.Seek(target);
+        }
     }
 
     // Метод для отрисовки радиуса турели
